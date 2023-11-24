@@ -2,30 +2,34 @@
 clear all;close all;clc;
 sampleSize  = 5*1e3-1; % number of samples, IC excluded
 dt          = 0.01; % time step 
-[data,y,z,t]= eulerLorenz( 10, 8/3, 28, [0.1 0 0 ], sampleSize, dt); % simulate Lorenz System with Euler method
-% D    = 2.06;   % Attractor dimension of Lorenz System
-% m    = ceil(2*D+1); % theoretical minimum embedding dimension (m) requirement 
-%% OPTION 2 : SIMULATE A MACKEY-GLASS SYSTEM DATA GENERATION %%
-clear all;close all;clc;
-sampleSize  = 5*1e3-1; % number of samples, IC excluded
-dt          = 0.1; % time step 
-a           = 0.2;     % value for a in eq (1)
-b           = 0.1;     % value for b in eq (1)
-tauMc       = 30;		% delay constant in eq (1)
-x0          = 0.9;		% initial condition: x(t=0)=x0
-varSys      = 0.0;     % system noise
-[data,~]    = mckyGlss(a,b,tauMc,x0,dt,sampleSize,varSys,'euler');
-%% OPTION 3 : LOAD ONE OF THE DATASETS %%
-clear all;close all;clc;
-load('sunSpots.mat');data=data'; %Sunspot time series 
-% load('minDailyTemp');data=data'; %Daily Temp. time series
+x0 = 10*(rand(3, 1)-0.5);
+% x0 = [0.1, 0, 0]; % [3.35107716963445, -3.1069350838915, 0.5395872119222]
+[data,y,z,t]= eulerLorenz( 10, 8/3, 28, x0, sampleSize, dt); % simulate Lorenz System with Euler method
+data = data(floor(sampleSize*0.2):end); % snip off first 20% to get rid of transience
 sampleSize  = length(data)-1;
+% % D    = 2.06;   % Attractor dimension of Lorenz System
+% % m    = ceil(2*D+1); % theoretical minimum embedding dimension (m) requirement 
+%% OPTION 2 : SIMULATE A MACKEY-GLASS SYSTEM DATA GENERATION %%
+% clear all;close all;clc;
+% sampleSize  = 5*1e3-1; % number of samples, IC excluded
+% dt          = 0.1; % time step 
+% a           = 0.2;     % value for a in eq (1)
+% b           = 0.1;     % value for b in eq (1)
+% tauMc       = 30;		% delay constant in eq (1)
+% x0          = 0.9;		% initial condition: x(t=0)=x0
+% varSys      = 0.0;     % system noise
+% [data,~]    = mckyGlss(a,b,tauMc,x0,dt,sampleSize,varSys,'euler');
+%% OPTION 3 : LOAD ONE OF THE DATASETS %%
+% clear all;close all;clc;
+% load('sunSpots.mat');data=data'; %Sunspot time series 
+% load('minDailyTemp');data=data'; %Daily Temp. time series
+% sampleSize  = length(data)-1;
 %% FORECASTING %%
-tau         = 5; % time delay 
-xObs        = data; % observed signal -> one can add noise here to see what happens
+tau         = 6; % time delay 
+xObs        = data+ 0.05*(rand(size(data))-0.5); % observed signal -> one can add noise here to see what happens
 xKeep       = data; % keep noise free signal
 m    = 3; % embedding dimension
-T    = 1; % Prediction time -> T=1 means predict the very next point in the time series
+T    = 10; % Prediction time -> T=1 means predict the very next point in the time series
 Nf   = floor((sampleSize+1)*.4); % Size of the fitting set
 Nt   = sampleSize-Nf+1; % Size of the testing set
 Ns   = 1; % Sampling rate -> Ns=1 uses all points in the time series
@@ -35,7 +39,7 @@ err            = zeros(1,length(iSet)); % Allocate memory for error vector
 forecast       = zeros(1,length(iSet)); % Allocate memory for forecast results
 jSet           = 1+(m-1)*tau:Nf-T; %Index set of the fittiing set 
 for iIdx=1:length(iSet) %For every point in the testing set ...
-    sprintf('i : %d/%d',iIdx,length(iSet))
+%     sprintf('i : %d/%d',iIdx,length(iSet))
     i               = iSet(iIdx); 
     testDelayVector = xObs(i:-tau:i-(m-1)*tau); % construct the delay vector of x[i]
     d_ij            = zeros(1,length(jSet)); % allocate memory for distance vector
